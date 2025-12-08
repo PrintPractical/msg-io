@@ -1,9 +1,10 @@
 [package]
 name = "msg-io"
-description = "A generic, streaming, incremental parser/deserializer over I/O (sync or async)."
+description = "A rust crate for providing a general framework for reading / writing structured data from / to I/O streams."
 version = "0.0.1"
 edition = "2024"
-authors = ["Chris Buchter <print.practical@gmail.com"]
+authors = ["Chris Buchter <print.practical@gmail.com>"]
+repository = "https://github.com/PrintPractical/msg-io"
 categories = ["network-programming", "io"]
 
 [dependencies]

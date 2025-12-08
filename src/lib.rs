@@ -1,3 +1,14 @@
+//! msg-io provides a framework for encoding and decoding messages over streams.
+//! 
+//! It supports both sync and async I/O models via feature flags.
+//! The core traits `Encoder` and `Decoder` allow the user to implement the logic for decoding their messages.
+//! 
+//! # Features
+//! 
+//! - `sync`: Enables synchronous I/O support using standard library traits.
+//! - `async`: Enables asynchronous I/O support using `futures` traits.
+//! - `tokio`: Enables integration with the `tokio` runtime and its I/O traits.
+//! 
 #[cfg(feature = "async")]
 pub mod r#async;
 pub mod constants;
