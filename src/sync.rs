@@ -1,20 +1,21 @@
-use std::{io::{self, Read, Write}};
+use std::io::{self, Read, Write};
 
 use bytes::{Buf, BytesMut};
 
-use crate::{decoder::{Decoder, DecoderResult}, encoder::Encoder};
+use crate::{
+    decoder::{Decoder, DecoderResult},
+    encoder::Encoder,
+};
 
 const INITIAL_BUFFER_SIZE: usize = 1024;
 const TEMP_BUFFER_SIZE: usize = 1024;
 
-pub struct MessageIo<S>
-{
+pub struct MessageIo<S> {
     stream: S,
     buffer: BytesMut,
 }
 
-impl<S> MessageIo<S>
-{
+impl<S> MessageIo<S> {
     pub fn new(stream: S) -> Self {
         Self {
             stream,
@@ -73,7 +74,7 @@ impl<S> MessageIo<S>
         E: Encoder<M>,
         S: Write,
     {
-        let encoded = E::encode(msg).map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+        let encoded = E::encode(msg).map_err(|e| io::Error::other(e))?;
         self.stream.write_all(&encoded)?;
         Ok(())
     }

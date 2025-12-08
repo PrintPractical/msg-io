@@ -3,15 +3,18 @@ use std::io;
 use bytes::{Buf, BytesMut};
 use futures_util::{AsyncReadExt, AsyncWriteExt};
 
-use crate::{constants::{INITIAL_BUFFER_SIZE, TEMP_BUFFER_SIZE}, decoder::Decoder, encoder::Encoder};
+use crate::{
+    constants::{INITIAL_BUFFER_SIZE, TEMP_BUFFER_SIZE},
+    decoder::Decoder,
+    encoder::Encoder,
+};
 
-pub struct MessageIo<S>
-{
+pub struct MessageIo<S> {
     stream: S,
     buffer: BytesMut,
 }
 
-impl<S> MessageIo<S>{
+impl<S> MessageIo<S> {
     pub fn new(stream: S) -> Self {
         Self {
             stream,
@@ -70,7 +73,8 @@ impl<S> MessageIo<S>{
         E: Encoder<M>,
         S: AsyncWriteExt + Unpin,
     {
-        let encoded = E::encode(message).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        let encoded =
+            E::encode(message).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
         self.stream.write_all(&encoded).await
     }
 }

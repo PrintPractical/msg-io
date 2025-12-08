@@ -1,16 +1,16 @@
-pub mod constants;
-pub mod encoder;
-pub mod decoder;
-#[cfg(feature = "sync")]
-pub mod sync;
 #[cfg(feature = "async")]
 pub mod r#async;
+pub mod constants;
+pub mod decoder;
+pub mod encoder;
+#[cfg(feature = "sync")]
+pub mod sync;
 #[cfg(feature = "tokio")]
 pub mod tokio;
 
 #[cfg(test)]
 mod tests {
-    use super::{sync, encoder, decoder, tokio as tokio_crate};
+    use super::{decoder, encoder, sync, tokio as tokio_crate};
 
     struct RawEncoder;
     impl encoder::Encoder<Vec<u8>> for RawEncoder {
@@ -36,7 +36,7 @@ mod tests {
     impl decoder::Decoder<Vec<u8>> for Uint16FramedDecoder {
         fn decode(data: &[u8]) -> decoder::DecoderResult<Vec<u8>> {
             match data.len() {
-                len if len >=2 => {
+                len if len >= 2 => {
                     let msg_len = u16::from_be_bytes([data[0], data[1]]) as usize;
                     if let Some(data) = data.get(2..2 + msg_len) {
                         let msg = data.to_vec();
@@ -81,15 +81,18 @@ mod tests {
         let _ = writer.write_message::<RawEncoder, Vec<u8>>(&incomplete_data);
         drop(writer); // Close writer to simulate end of stream
         let read_result = reader.read_message::<Uint16FramedDecoder, Vec<u8>>();
-        assert!(matches!(read_result, Ok(None)), "Expected None for incomplete message");
+        assert!(
+            matches!(read_result, Ok(None)),
+            "Expected None for incomplete message"
+        );
     }
 
     #[cfg(feature = "tokio")]
     #[tokio::test]
     async fn test_async_message_io() {
-       let (rx, tx) = tokio::net::UnixStream::pair().expect("Failed to create UnixStream pair");
-       let mut reader = tokio_crate::MessageTokio::new_reader(rx);
-       let mut writer = tokio_crate::MessageTokio::new_writer(tx);
+        let (rx, tx) = tokio::net::UnixStream::pair().expect("Failed to create UnixStream pair");
+        let mut reader = tokio_crate::MessageTokio::new_reader(rx);
+        let mut writer = tokio_crate::MessageTokio::new_writer(tx);
 
         // Test Successful Case
         let data = b"hello async world!".to_vec();
@@ -118,6 +121,9 @@ mod tests {
             .await;
         drop(writer); // Close writer to simulate end of stream
         let read_result = reader.read_message::<Uint16FramedDecoder, Vec<u8>>().await;
-        assert!(matches!(read_result, Ok(None)), "Expected None for incomplete message");
+        assert!(
+            matches!(read_result, Ok(None)),
+            "Expected None for incomplete message"
+        );
     }
 }
