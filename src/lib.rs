@@ -21,7 +21,9 @@ pub mod tokio;
 
 #[cfg(test)]
 mod tests {
-    use super::{decoder, encoder, sync, tokio as tokio_crate};
+    use super::{decoder, encoder, sync};
+    #[cfg(feature = "tokio")]
+    use super::tokio as tokio_crate;
 
     struct RawEncoder;
     impl encoder::Encoder<Vec<u8>> for RawEncoder {
