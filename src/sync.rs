@@ -24,7 +24,9 @@ impl<S, E, D> MessageIo<S, E, D> {
     /// 
     /// # Arguments
     /// 
-    /// * `stream`: An asynchronous stream that implements both `Read` and `Write`.
+    /// * `stream`: An synchronous stream.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
     /// 
     /// # Returns
     /// 
@@ -44,7 +46,7 @@ impl<S, ED> MessageIo<S, ED, ED> {
     /// 
     /// # Arguments
     /// 
-    /// * `stream`: An asynchronous stream that implements both `Read` and `Write`.
+    /// * `stream`: An synchronous stream that implements both `Read` and `Write`.
     /// * `enc_dec`: An encoder/decoder that implements both `Encoder` and `Decoder` traits. Needs to be clone as well.
     /// 
     /// # Returns
@@ -64,7 +66,8 @@ impl<S, D> MessageIo<S, (), D> {
     /// 
     /// # Arguments
     /// 
-    /// * `stream`: An asynchronous stream that implements `Read`.
+    /// * `stream`: An synchronous stream that implements `Read`.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
     /// 
     /// # Returns
     /// 
@@ -86,7 +89,6 @@ impl<S, D> MessageIo<S, (), D> {
     /// 
     /// # Type Parameters
     /// 
-    /// * `D`: The decoder type that implements the `Decoder` trait.
     /// * `M`: The message type to be decoded.
     /// 
     /// # Returns
@@ -124,7 +126,8 @@ impl<S,E> MessageIo<S, E, ()> {
     /// 
     /// # Arguments
     /// 
-    /// * `stream`: An asynchronous stream that implements `Write`.
+    /// * `stream`: An synchronous stream that implements `Write`.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
     /// 
     /// # Returns
     /// 
@@ -146,7 +149,6 @@ impl<S,E> MessageIo<S, E, ()> {
     /// 
     /// # Type Parameters
     /// 
-    /// * `E`: The encoder type that implements the `Encoder` trait.
     /// * `M`: The type of the message to be encoded.
     /// 
     /// # Returns

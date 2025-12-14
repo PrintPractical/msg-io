@@ -13,6 +13,7 @@ pub enum DecoderResult<T> {
 
 /// Trait for decoding messages from a byte slice.
 pub trait Decoder {
+    /// The output data type after decoding.
     type Output;
     /// Decodes a message from the given byte slice.
     /// 

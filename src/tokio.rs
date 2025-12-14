@@ -13,6 +13,7 @@ impl MessageTokio {
     /// # Arguments
     /// 
     /// * `stream`: An asynchronous stream that implements both `AsyncRead` and `AsyncWrite`.
+    /// * `enc_dec`: A struct that implements both `Encoder` and `Decoder` traits. Needs to be clone as well.
     /// 
     /// # Returns
     /// 
@@ -30,6 +31,7 @@ impl MessageTokio {
     /// # Arguments
     /// 
     /// * `stream`: An asynchronous stream that implements `AsyncRead`.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
     /// 
     /// # Returns
     /// 
@@ -47,6 +49,7 @@ impl MessageTokio {
     /// # Arguments
     /// 
     /// * `stream`: An asynchronous stream that implements `AsyncWrite`.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
     /// 
     /// # Returns
     /// 

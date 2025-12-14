@@ -2,12 +2,13 @@
 
 /// Trait for encoding messages into a byte vector.
 pub trait Encoder {
+    /// The input data type to be encoded.
     type Input;
     /// Encodes the given data into a byte vector.
     /// 
     /// # Arguments
     /// 
-    /// * `data`: A reference to the data of type `T` to be encoded
+    /// * `data`: A reference to the data of type `Self::Input` to be encoded
     /// 
     /// # Returns
     /// 

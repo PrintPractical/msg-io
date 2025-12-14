@@ -23,7 +23,9 @@ impl<S, E, D> AsyncMessageIo<S, E, D> {
     /// 
     /// # Arguments
     /// 
-    /// * `stream`: An asynchronous stream that implements both `AsyncReadExt` and `AsyncWriteExt`.
+    /// * `stream`: An asynchronous stream.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
     /// 
     /// # Returns
     /// 
@@ -69,6 +71,7 @@ impl<S, D> AsyncMessageIo<S, (), D> {
     /// # Arguments
     /// 
     /// * `stream`: An asynchronous stream that implements `AsyncReadExt`.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
     /// 
     /// # Returns
     /// 
@@ -85,7 +88,6 @@ impl<S, D> AsyncMessageIo<S, (), D> {
     /// 
     /// # Type Parameters
     /// 
-    /// * `D`: The decoder type that implements the `Decoder` trait for messages of type `M`.
     /// * `M`: The type of the message to be decoded.
     /// 
     /// # Returns
@@ -127,6 +129,7 @@ impl<S, E> AsyncMessageIo<S, E, ()> {
     /// # Arguments
     /// 
     /// * `stream`: An asynchronous stream that implements `AsyncWriteExt`.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
     /// 
     /// # Returns
     /// 
@@ -143,7 +146,6 @@ impl<S, E> AsyncMessageIo<S, E, ()> {
     /// 
     /// # Type Parameters
     /// 
-    /// * `E`: The encoder type that implements the `Encoder` trait for messages of type `M`.
     /// * `M`: The type of the message to be encoded.
     /// 
     /// # Returns
