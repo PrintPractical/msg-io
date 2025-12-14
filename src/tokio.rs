@@ -2,7 +2,7 @@
 use tokio::io::{AsyncRead as TokioAsyncRead, AsyncWrite as TokioAsyncWrite};
 use tokio_util::compat::{Compat, TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
-use crate::r#async::MessageIo;
+use crate::{r#async::AsyncMessageIo, decoder::Decoder, encoder::Encoder};
 
 // A wrapper around the asynchronous MessageIo to work with Tokio streams.
 pub struct MessageTokio;
@@ -17,11 +17,12 @@ impl MessageTokio {
     /// # Returns
     /// 
     /// A new async instance of `MessageIo`.
-    pub fn new<S>(stream: S) -> MessageIo<Compat<S>>
+    pub fn new_rw<S, ED>(stream: S, enc_dec: ED) -> AsyncMessageIo<Compat<S>, ED, ED>
     where
         S: TokioAsyncRead + TokioAsyncWrite + Unpin,
+        ED: Encoder + Decoder + Clone,
     {
-        MessageIo::new(stream.compat_write())
+        AsyncMessageIo::new_rw(stream.compat_write(), enc_dec)
     }
 
     /// Creates a new MessageIo instance for reading with the given Tokio stream.
@@ -33,11 +34,12 @@ impl MessageTokio {
     /// # Returns
     /// 
     /// A new async instance of `MessageIo` for reading.
-    pub fn new_reader<S>(stream: S) -> MessageIo<Compat<S>>
+    pub fn new_reader<S, D>(stream: S, decoder: D) -> AsyncMessageIo<Compat<S>, (), D>
     where
         S: TokioAsyncRead + Unpin,
+        D: Decoder,
     {
-        MessageIo::new_reader(stream.compat())
+        AsyncMessageIo::new_reader(stream.compat(), decoder)
     }
 
     /// Creates a new MessageIo instance for writing with the given Tokio stream.
@@ -49,10 +51,11 @@ impl MessageTokio {
     /// # Returns
     /// 
     /// A new async instance of `MessageIo` for writing.
-    pub fn new_writer<S>(stream: S) -> MessageIo<Compat<S>>
+    pub fn new_writer<S, E>(stream: S, encoder: E) -> AsyncMessageIo<Compat<S>, E, ()>
     where
         S: TokioAsyncWrite + Unpin,
+        E: Encoder,
     {
-        MessageIo::new_writer(stream.compat_write())
+        AsyncMessageIo::new_writer(stream.compat_write(), encoder)
     }
 }

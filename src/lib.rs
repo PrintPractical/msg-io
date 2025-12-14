@@ -26,15 +26,17 @@ mod tests {
     use super::tokio as tokio_crate;
 
     struct RawEncoder;
-    impl encoder::Encoder<Vec<u8>> for RawEncoder {
-        fn encode(data: &Vec<u8>) -> Result<Vec<u8>, String> {
+    impl encoder::Encoder for RawEncoder {
+        type Input = Vec<u8>;
+        fn encode(&mut self, data: &Vec<u8>) -> Result<Vec<u8>, String> {
             Ok(data.clone())
         }
     }
 
     struct Uint16FramedEncoder;
-    impl encoder::Encoder<Vec<u8>> for Uint16FramedEncoder {
-        fn encode(data: &Vec<u8>) -> Result<Vec<u8>, String> {
+    impl encoder::Encoder for Uint16FramedEncoder {
+        type Input = Vec<u8>;
+        fn encode(&mut self, data: &Vec<u8>) -> Result<Vec<u8>, String> {
             let len = data.len();
             if len > u16::MAX as usize {
                 return Err("Data too large to encode".to_string());
@@ -46,8 +48,9 @@ mod tests {
         }
     }
     struct Uint16FramedDecoder;
-    impl decoder::Decoder<Vec<u8>> for Uint16FramedDecoder {
-        fn decode(data: &[u8]) -> decoder::DecoderResult<Vec<u8>> {
+    impl decoder::Decoder for Uint16FramedDecoder {
+        type Output = Vec<u8>;
+        fn decode(&mut self, data: &[u8]) -> decoder::DecoderResult<Vec<u8>> {
             match data.len() {
                 len if len >= 2 => {
                     let msg_len = u16::from_be_bytes([data[0], data[1]]) as usize;
@@ -70,30 +73,39 @@ mod tests {
             Ok((reader, writer)) => (reader, writer),
             Err(e) => panic!("Failed to create pipe: {}", e),
         };
-        let mut reader = sync::MessageIo::new_reader(pipe.0);
-        let mut writer = sync::MessageIo::new_writer(pipe.1);
+        let mut reader = sync::MessageIo::new_reader(pipe.0, Uint16FramedDecoder);
+        let mut writer = sync::MessageIo::new_writer(pipe.1, Uint16FramedEncoder);
 
         // Test Successful Case
         let data = b"hello world!".to_vec();
         writer
-            .write_message::<Uint16FramedEncoder, Vec<u8>>(&data)
+            .write_message::<Vec<u8>>(&data)
             .expect("Failed to write message");
         let received = reader
-            .read_message::<Uint16FramedDecoder, Vec<u8>>()
+            .read_message::<Vec<u8>>()
             .expect("Failed to read message")
             .expect("No message received");
         assert_eq!(data, received);
 
         // Test too large message
         let large_data = vec![0u8; 70000]; // larger than u16::MAX
-        let write_result = writer.write_message::<Uint16FramedEncoder, Vec<u8>>(&large_data);
+        let write_result = writer.write_message::<Vec<u8>>(&large_data);
         assert!(write_result.is_err(), "Expected error for large message");
 
-        // Test incomplete message
-        let incomplete_data = b"\x00\x10hello".to_vec(); // Declares length 16, but only 5 bytes provided
-        let _ = writer.write_message::<RawEncoder, Vec<u8>>(&incomplete_data);
         drop(writer); // Close writer to simulate end of stream
-        let read_result = reader.read_message::<Uint16FramedDecoder, Vec<u8>>();
+        drop(reader); // Close reader
+
+        // Test incomplete message
+        let pipe = match std::io::pipe() {
+            Ok((reader, writer)) => (reader, writer),
+            Err(e) => panic!("Failed to create pipe: {}", e),
+        };
+        let mut reader = sync::MessageIo::new_reader(pipe.0, Uint16FramedDecoder);
+        let mut writer = sync::MessageIo::new_writer(pipe.1, RawEncoder);
+        let incomplete_data = b"\x00\x10hello".to_vec(); // Declares length 16, but only 5 bytes provided
+        let _ = writer.write_message::<Vec<u8>>(&incomplete_data);
+        drop(writer); // Close writer to simulate end of stream
+        let read_result = reader.read_message::<Vec<u8>>();
         assert!(
             matches!(read_result, Ok(None)),
             "Expected None for incomplete message"
@@ -104,17 +116,17 @@ mod tests {
     #[tokio::test]
     async fn test_async_message_io() {
         let (rx, tx) = tokio::net::UnixStream::pair().expect("Failed to create UnixStream pair");
-        let mut reader = tokio_crate::MessageTokio::new_reader(rx);
-        let mut writer = tokio_crate::MessageTokio::new_writer(tx);
+        let mut reader = tokio_crate::MessageTokio::new_reader(rx, Uint16FramedDecoder);
+        let mut writer = tokio_crate::MessageTokio::new_writer(tx, Uint16FramedEncoder);
 
         // Test Successful Case
         let data = b"hello async world!".to_vec();
         writer
-            .write_message::<Uint16FramedEncoder, Vec<u8>>(&data)
+            .write_message::<Vec<u8>>(&data)
             .await
             .expect("Failed to write message");
         let received = reader
-            .read_message::<Uint16FramedDecoder, Vec<u8>>()
+            .read_message::<Vec<u8>>()
             .await
             .expect("Failed to read message")
             .expect("No message received");
@@ -123,17 +135,18 @@ mod tests {
         // Test too large message
         let large_data = vec![0u8; 70000]; // larger than u16::MAX
         let write_result = writer
-            .write_message::<Uint16FramedEncoder, Vec<u8>>(&large_data)
+            .write_message::<Vec<u8>>(&large_data)
             .await;
         assert!(write_result.is_err(), "Expected error for large message");
 
-        // Test incomplete message
+        // Test incomplete message (use a fresh pair so writer can use a raw encoder)
+        let (rx, tx) = tokio::net::UnixStream::pair().expect("Failed to create UnixStream pair");
+        let mut reader = tokio_crate::MessageTokio::new_reader(rx, Uint16FramedDecoder);
+        let mut writer = tokio_crate::MessageTokio::new_writer(tx, RawEncoder);
         let incomplete_data = b"\x00\x10hello".to_vec(); // Declares length 16, but only 5 bytes provided
-        let _ = writer
-            .write_message::<RawEncoder, Vec<u8>>(&incomplete_data)
-            .await;
+        let _ = writer.write_message::<Vec<u8>>(&incomplete_data).await;
         drop(writer); // Close writer to simulate end of stream
-        let read_result = reader.read_message::<Uint16FramedDecoder, Vec<u8>>().await;
+        let read_result = reader.read_message::<Vec<u8>>().await;
         assert!(
             matches!(read_result, Ok(None)),
             "Expected None for incomplete message"
