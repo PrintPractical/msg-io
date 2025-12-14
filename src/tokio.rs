@@ -10,6 +10,12 @@ pub struct MessageTokio;
 impl MessageTokio {
     /// Creates a new MessageIo instance (Read & Write) with the given Tokio stream.
     ///
+    /// # Type Parameters
+    ///
+    /// * `S`: The type of the Tokio stream.
+    /// * `ED`: The type of the encoder/decoder.
+    /// * `EDT`: The type of the input/out data to be encoded/decoded.
+    ///
     /// # Arguments
     ///
     /// * `stream`: An asynchronous stream that implements both `AsyncRead` and `AsyncWrite`.
@@ -18,15 +24,21 @@ impl MessageTokio {
     /// # Returns
     ///
     /// A new async instance of `MessageIo`.
-    pub fn new_rw<S, ED>(stream: S, enc_dec: ED) -> AsyncMessageIo<Compat<S>, ED, ED>
+    pub fn new_rw<S, ED, EDT>(stream: S, enc_dec: ED) -> AsyncMessageIo<Compat<S>, ED, ED>
     where
         S: TokioAsyncRead + TokioAsyncWrite + Unpin,
-        ED: Encoder + Decoder + Clone,
+        ED: Encoder<EDT> + Decoder<EDT> + Clone,
     {
         AsyncMessageIo::new_rw(stream.compat_write(), enc_dec)
     }
 
     /// Creates a new MessageIo instance for reading with the given Tokio stream.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `S`: The type of the Tokio stream.
+    /// * `D`: The type of the decoder.
+    /// * `DT`: The type of the output data to be decoded.
     ///
     /// # Arguments
     ///
@@ -36,15 +48,21 @@ impl MessageTokio {
     /// # Returns
     ///
     /// A new async instance of `MessageIo` for reading.
-    pub fn new_reader<S, D>(stream: S, decoder: D) -> AsyncMessageIo<Compat<S>, (), D>
+    pub fn new_reader<S, D, DT>(stream: S, decoder: D) -> AsyncMessageIo<Compat<S>, (), D>
     where
         S: TokioAsyncRead + Unpin,
-        D: Decoder,
+        D: Decoder<DT>,
     {
         AsyncMessageIo::new_reader(stream.compat(), decoder)
     }
 
     /// Creates a new MessageIo instance for writing with the given Tokio stream.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `S`: The type of the Tokio stream.
+    /// * `E`: The type of the encoder.
+    /// * `ET`: The type of the input data to be encoded.
     ///
     /// # Arguments
     ///
@@ -54,10 +72,10 @@ impl MessageTokio {
     /// # Returns
     ///
     /// A new async instance of `MessageIo` for writing.
-    pub fn new_writer<S, E>(stream: S, encoder: E) -> AsyncMessageIo<Compat<S>, E, ()>
+    pub fn new_writer<S, E, ET>(stream: S, encoder: E) -> AsyncMessageIo<Compat<S>, E, ()>
     where
         S: TokioAsyncWrite + Unpin,
-        E: Encoder,
+        E: Encoder<ET>,
     {
         AsyncMessageIo::new_writer(stream.compat_write(), encoder)
     }

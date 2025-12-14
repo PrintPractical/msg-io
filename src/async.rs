@@ -30,12 +30,7 @@ impl<S, E, D> AsyncMessageIo<S, E, D> {
     /// # Returns
     ///
     /// A new instance of `MessageIo`.
-    fn new(stream: S, encoder: E, decoder: D) -> Self
-    where
-        S: Unpin,
-        E: Encoder,
-        D: Decoder,
-    {
+    fn new(stream: S, encoder: E, decoder: D) -> Self {
         Self {
             stream,
             encoder,
@@ -48,6 +43,10 @@ impl<S, E, D> AsyncMessageIo<S, E, D> {
 impl<S, ED> AsyncMessageIo<S, ED, ED> {
     /// Creates a new MessageIo instance for reading and writing with the given stream.
     ///
+    /// # Type Parameters
+    ///
+    /// * `EDT`: The type of the input/out data to be encoded/decoded.
+    ///
     /// # Arguments
     ///
     /// * `stream`: An asynchronous stream that implements both `AsyncReadExt` and `AsyncWriteExt`.
@@ -56,10 +55,10 @@ impl<S, ED> AsyncMessageIo<S, ED, ED> {
     /// # Returns
     ///
     /// A new instance of `MessageIo` for reading and writing.
-    pub fn new_rw(stream: S, enc_dec: ED) -> Self
+    pub fn new_rw<EDT>(stream: S, enc_dec: ED) -> Self
     where
         S: AsyncReadExt + AsyncWriteExt + Unpin,
-        ED: Encoder + Decoder + Clone,
+        ED: Encoder<EDT> + Decoder<EDT> + Clone,
     {
         Self::new(stream, enc_dec.clone(), enc_dec)
     }
@@ -67,6 +66,10 @@ impl<S, ED> AsyncMessageIo<S, ED, ED> {
 
 impl<S, D> AsyncMessageIo<S, (), D> {
     /// Creates a new MessageIo instance for reading with the given stream.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `DT`: The type of the output data to be decoded.
     ///
     /// # Arguments
     ///
@@ -76,10 +79,10 @@ impl<S, D> AsyncMessageIo<S, (), D> {
     /// # Returns
     ///
     /// A new instance of `MessageIo` for reading.
-    pub fn new_reader(stream: S, decoder: D) -> Self
+    pub fn new_reader<DT>(stream: S, decoder: D) -> Self
     where
         S: AsyncReadExt + Unpin,
-        D: Decoder,
+        D: Decoder<DT>,
     {
         Self::new(stream, (), decoder)
     }
@@ -98,7 +101,7 @@ impl<S, D> AsyncMessageIo<S, (), D> {
     /// - `Err(io::Error)`: An error occurred during reading or decoding.
     pub async fn read_message<M>(&mut self) -> io::Result<Option<M>>
     where
-        D: Decoder<Output = M>,
+        D: Decoder<M>,
         S: AsyncReadExt + Unpin,
     {
         loop {
@@ -126,6 +129,10 @@ impl<S, D> AsyncMessageIo<S, (), D> {
 impl<S, E> AsyncMessageIo<S, E, ()> {
     /// Creates a new MessageIo instance for writing with the given stream.
     ///
+    /// # Type Parameters
+    ///
+    /// * `ET`: The type of the input data to be encoded.
+    ///
     /// # Arguments
     ///
     /// * `stream`: An asynchronous stream that implements `AsyncWriteExt`.
@@ -134,10 +141,10 @@ impl<S, E> AsyncMessageIo<S, E, ()> {
     /// # Returns
     ///
     /// A new instance of `MessageIo` for writing.
-    pub fn new_writer(stream: S, encoder: E) -> Self
+    pub fn new_writer<ET>(stream: S, encoder: E) -> Self
     where
         S: AsyncWriteExt + Unpin,
-        E: Encoder,
+        E: Encoder<ET>,
     {
         Self::new(stream, encoder, ())
     }
@@ -155,7 +162,7 @@ impl<S, E> AsyncMessageIo<S, E, ()> {
     /// - `Err(io::Error)`: An error occurred during encoding or writing.
     pub async fn write_message<M>(&mut self, message: &M) -> io::Result<()>
     where
-        E: Encoder<Input = M>,
+        E: Encoder<M>,
         S: AsyncWriteExt + Unpin,
     {
         let encoded = self

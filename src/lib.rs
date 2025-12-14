@@ -28,16 +28,14 @@ mod tests {
     use super::{decoder, encoder};
 
     struct RawEncoder;
-    impl encoder::Encoder for RawEncoder {
-        type Input = Vec<u8>;
+    impl encoder::Encoder<Vec<u8>> for RawEncoder {
         fn encode(&mut self, data: &Vec<u8>) -> Result<Vec<u8>, String> {
             Ok(data.clone())
         }
     }
 
     struct Uint16FramedEncoder;
-    impl encoder::Encoder for Uint16FramedEncoder {
-        type Input = Vec<u8>;
+    impl encoder::Encoder<Vec<u8>> for Uint16FramedEncoder {
         fn encode(&mut self, data: &Vec<u8>) -> Result<Vec<u8>, String> {
             let len = data.len();
             if len > u16::MAX as usize {
@@ -50,8 +48,7 @@ mod tests {
         }
     }
     struct Uint16FramedDecoder;
-    impl decoder::Decoder for Uint16FramedDecoder {
-        type Output = Vec<u8>;
+    impl decoder::Decoder<Vec<u8>> for Uint16FramedDecoder {
         fn decode(&mut self, data: &[u8]) -> decoder::DecoderResult<Vec<u8>> {
             match data.len() {
                 len if len >= 2 => {
