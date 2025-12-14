@@ -16,13 +16,13 @@ pub trait Decoder {
     /// The output data type after decoding.
     type Output;
     /// Decodes a message from the given byte slice.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `data`: A byte slice containing the data to decode.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A DecoderResult indicating the outcome of the decoding operation.
     fn decode(&mut self, data: &[u8]) -> DecoderResult<Self::Output>;
 }
