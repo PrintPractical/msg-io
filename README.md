@@ -2,6 +2,8 @@
 
 msg-io is a Rust crate that provides a standard framework for working with I/O streams and structured data/protocols.
 
+### WARNING: API changes will continue to break until 0.1.0.
+
 ## Background
 
 I find myself working on a lot of Rust projects in which I am communicating with other entities that encode their data differently over the wire. An example is some external entities send their data over Unix Domain Sockets encoded like this:

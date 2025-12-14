@@ -12,7 +12,8 @@ pub enum DecoderResult<T> {
 }
 
 /// Trait for decoding messages from a byte slice.
-pub trait Decoder<T> {
+pub trait Decoder {
+    type Output;
     /// Decodes a message from the given byte slice.
     /// 
     /// # Arguments
@@ -22,5 +23,13 @@ pub trait Decoder<T> {
     /// # Returns
     /// 
     /// A DecoderResult indicating the outcome of the decoding operation.
-    fn decode(data: &[u8]) -> DecoderResult<T>;
+    fn decode(&mut self, data: &[u8]) -> DecoderResult<Self::Output>;
+}
+
+/// A no-op decoder implementation for the unit type `()`.
+impl Decoder for () {
+    type Output = Self;
+    fn decode(&mut self, data: &[u8]) -> DecoderResult<Self> {
+        DecoderResult::Done((), data.len())
+    }
 }
