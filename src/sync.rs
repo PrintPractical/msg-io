@@ -44,6 +44,10 @@ impl<S, E, D> MessageIo<S, E, D> {
 impl<S, ED> MessageIo<S, ED, ED> {
     /// Creates a new MessageIo instance for reading and writing with the given stream.
     ///
+    /// # Type Parameters
+    ///
+    /// * `EDT`: The type of the input/out data to be encoded/decoded.
+    ///
     /// # Arguments
     ///
     /// * `stream`: An synchronous stream that implements both `Read` and `Write`.
@@ -52,10 +56,10 @@ impl<S, ED> MessageIo<S, ED, ED> {
     /// # Returns
     ///
     /// A new instance of `MessageIo` for reading and writing.
-    pub fn new_rw<T>(stream: S, enc_dec: ED) -> Self
+    pub fn new_rw<EDT>(stream: S, enc_dec: ED) -> Self
     where
         S: Read + Write,
-        ED: Encoder + Decoder + Clone,
+        ED: Encoder<EDT> + Decoder<EDT> + Clone,
     {
         Self::new(stream, enc_dec.clone(), enc_dec)
     }
@@ -63,6 +67,10 @@ impl<S, ED> MessageIo<S, ED, ED> {
 
 impl<S, D> MessageIo<S, (), D> {
     /// Creates a new MessageIo instance for reading with the given stream.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `DT`: The type of the output data to be decoded.
     ///
     /// # Arguments
     ///
@@ -72,10 +80,10 @@ impl<S, D> MessageIo<S, (), D> {
     /// # Returns
     ///
     /// A new instance of `MessageIo` for reading.
-    pub fn new_reader(stream: S, decoder: D) -> Self
+    pub fn new_reader<DT>(stream: S, decoder: D) -> Self
     where
         S: Read,
-        D: Decoder,
+        D: Decoder<DT>,
     {
         Self {
             stream,
@@ -96,7 +104,7 @@ impl<S, D> MessageIo<S, (), D> {
     /// A result containing an optional message of type `M`.
     pub fn read_message<M>(&mut self) -> io::Result<Option<M>>
     where
-        D: Decoder<Output = M>,
+        D: Decoder<M>,
         S: Read,
     {
         loop {
@@ -124,6 +132,10 @@ impl<S, D> MessageIo<S, (), D> {
 impl<S, E> MessageIo<S, E, ()> {
     /// Creates a new MessageIo instance for writing with the given stream.
     ///
+    /// # Type Parameters
+    ///
+    /// * `ET`: The type of the input data to be encoded.
+    ///
     /// # Arguments
     ///
     /// * `stream`: An synchronous stream that implements `Write`.
@@ -132,10 +144,10 @@ impl<S, E> MessageIo<S, E, ()> {
     /// # Returns
     ///
     /// A new instance of `MessageIo` for writing.
-    pub fn new_writer(stream: S, encoder: E) -> Self
+    pub fn new_writer<ET>(stream: S, encoder: E) -> Self
     where
         S: Write,
-        E: Encoder,
+        E: Encoder<ET>,
     {
         Self {
             stream,
@@ -158,10 +170,10 @@ impl<S, E> MessageIo<S, E, ()> {
     /// - `Err(io::Error)`: An error occurred during encoding or writing.
     pub fn write_message<M>(&mut self, msg: &M) -> io::Result<()>
     where
-        E: Encoder<Input = M>,
+        E: Encoder<M>,
         S: Write,
     {
-        let encoded = self.encoder.encode(msg).map_err(|e| io::Error::other(e))?;
+        let encoded = self.encoder.encode(msg).map_err(io::Error::other)?;
         self.stream.write_all(&encoded)?;
         Ok(())
     }

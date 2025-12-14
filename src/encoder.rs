@@ -1,10 +1,12 @@
 //! Encoder trait for encoding data into bytes.
 
 /// Trait for encoding messages into a byte vector.
-pub trait Encoder {
-    /// The input data type to be encoded.
-    type Input;
+pub trait Encoder<T> {
     /// Encodes the given data into a byte vector.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `T`: The type of the input data to be encoded.
     ///
     /// # Arguments
     ///
@@ -13,13 +15,11 @@ pub trait Encoder {
     /// # Returns
     ///
     /// A Result containing the encoded byte vector or an error message.
-    fn encode(&mut self, data: &Self::Input) -> Result<Vec<u8>, String>;
+    fn encode(&mut self, data: &T) -> Result<Vec<u8>, String>;
 }
 
 /// A no-op encoder implementation for the unit type `()`.
-impl Encoder for () {
-    type Input = Self;
-
+impl Encoder<()> for () {
     fn encode(&mut self, _data: &Self) -> Result<Vec<u8>, String> {
         Ok(Vec::new())
     }
