@@ -160,7 +160,7 @@ impl<S, E> AsyncMessageIo<S, E, ()> {
     /// The result of the write operation, which is either:
     /// - `Ok(())`: The message was successfully written.
     /// - `Err(io::Error)`: An error occurred during encoding or writing.
-    pub async fn write_message<M>(&mut self, message: &M) -> io::Result<()>
+    pub async fn write_message<M>(&mut self, message: M) -> io::Result<()>
     where
         E: Encoder<M>,
         S: AsyncWriteExt + Unpin,

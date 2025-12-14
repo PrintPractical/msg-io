@@ -28,14 +28,14 @@ mod tests {
     use super::{decoder, encoder};
 
     struct RawEncoder;
-    impl encoder::Encoder<Vec<u8>> for RawEncoder {
+    impl encoder::Encoder<&Vec<u8>> for RawEncoder {
         fn encode(&mut self, data: &Vec<u8>) -> Result<Vec<u8>, String> {
             Ok(data.clone())
         }
     }
 
     struct Uint16FramedEncoder;
-    impl encoder::Encoder<Vec<u8>> for Uint16FramedEncoder {
+    impl encoder::Encoder<&Vec<u8>> for Uint16FramedEncoder {
         fn encode(&mut self, data: &Vec<u8>) -> Result<Vec<u8>, String> {
             let len = data.len();
             if len > u16::MAX as usize {
@@ -78,17 +78,17 @@ mod tests {
         // Test Successful Case
         let data = b"hello world!".to_vec();
         writer
-            .write_message::<Vec<u8>>(&data)
+            .write_message(&data)
             .expect("Failed to write message");
         let received = reader
-            .read_message::<Vec<u8>>()
+            .read_message()
             .expect("Failed to read message")
             .expect("No message received");
         assert_eq!(data, received);
 
         // Test too large message
         let large_data = vec![0u8; 70000]; // larger than u16::MAX
-        let write_result = writer.write_message::<Vec<u8>>(&large_data);
+        let write_result = writer.write_message(&large_data);
         assert!(write_result.is_err(), "Expected error for large message");
 
         drop(writer); // Close writer to simulate end of stream
@@ -102,9 +102,9 @@ mod tests {
         let mut reader = sync::MessageIo::new_reader(pipe.0, Uint16FramedDecoder);
         let mut writer = sync::MessageIo::new_writer(pipe.1, RawEncoder);
         let incomplete_data = b"\x00\x10hello".to_vec(); // Declares length 16, but only 5 bytes provided
-        let _ = writer.write_message::<Vec<u8>>(&incomplete_data);
+        let _ = writer.write_message(&incomplete_data);
         drop(writer); // Close writer to simulate end of stream
-        let read_result = reader.read_message::<Vec<u8>>();
+        let read_result = reader.read_message();
         assert!(
             matches!(read_result, Ok(None)),
             "Expected None for incomplete message"
@@ -121,11 +121,11 @@ mod tests {
         // Test Successful Case
         let data = b"hello async world!".to_vec();
         writer
-            .write_message::<Vec<u8>>(&data)
+            .write_message(&data)
             .await
             .expect("Failed to write message");
         let received = reader
-            .read_message::<Vec<u8>>()
+            .read_message()
             .await
             .expect("Failed to read message")
             .expect("No message received");
@@ -133,7 +133,7 @@ mod tests {
 
         // Test too large message
         let large_data = vec![0u8; 70000]; // larger than u16::MAX
-        let write_result = writer.write_message::<Vec<u8>>(&large_data).await;
+        let write_result = writer.write_message(&large_data).await;
         assert!(write_result.is_err(), "Expected error for large message");
 
         // Test incomplete message (use a fresh pair so writer can use a raw encoder)
@@ -141,7 +141,7 @@ mod tests {
         let mut reader = tokio_crate::MessageTokio::new_reader(rx, Uint16FramedDecoder);
         let mut writer = tokio_crate::MessageTokio::new_writer(tx, RawEncoder);
         let incomplete_data = b"\x00\x10hello".to_vec(); // Declares length 16, but only 5 bytes provided
-        let _ = writer.write_message::<Vec<u8>>(&incomplete_data).await;
+        let _ = writer.write_message(&incomplete_data).await;
         drop(writer); // Close writer to simulate end of stream
         let read_result = reader.read_message::<Vec<u8>>().await;
         assert!(
