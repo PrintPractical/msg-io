@@ -168,7 +168,7 @@ impl<S, E> MessageIo<S, E, ()> {
     /// The result of the write operation, which is either:
     /// - `Ok(())`: The message was successfully written.
     /// - `Err(io::Error)`: An error occurred during encoding or writing.
-    pub fn write_message<M>(&mut self, msg: &M) -> io::Result<()>
+    pub fn write_message<M>(&mut self, msg: M) -> io::Result<()>
     where
         E: Encoder<M>,
         S: Write,

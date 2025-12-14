@@ -39,8 +39,7 @@ msg-io defines an `Encoder` and `Decoder` trait. These traits are responsible fo
 
 ```rust
 struct Uint32FramedDecoder;
-impl decoder::Decoder for Uint16FramedDecoder {
-    type Output = Vec<u8>;
+impl decoder::Decoder<Vec<u8>> for Uint16FramedDecoder {
     fn decode(&mut self, data: &[u8]) -> decoder::DecoderResult<Vec<u8>> {
         match data.len() {
             len if len >= 4 => {

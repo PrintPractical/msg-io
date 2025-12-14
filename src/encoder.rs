@@ -15,12 +15,12 @@ pub trait Encoder<T> {
     /// # Returns
     ///
     /// A Result containing the encoded byte vector or an error message.
-    fn encode(&mut self, data: &T) -> Result<Vec<u8>, String>;
+    fn encode(&mut self, data: T) -> Result<Vec<u8>, String>;
 }
 
 /// A no-op encoder implementation for the unit type `()`.
 impl Encoder<()> for () {
-    fn encode(&mut self, _data: &Self) -> Result<Vec<u8>, String> {
+    fn encode(&mut self, _data: Self) -> Result<Vec<u8>, String> {
         Ok(Vec::new())
     }
 }
