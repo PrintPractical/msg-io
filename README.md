@@ -2,7 +2,7 @@
 
 msg-io is a Rust crate that provides a standard framework for working with I/O streams and structured data/protocols.
 
-### WARNING: API changes will continue to break until 0.1.0.
+### WARNING: Random API changes, documentation mismatches, etc will continue until 0.1.0.
 
 ## Background
 
@@ -32,3 +32,42 @@ tokio::select! {
 read_exact() is not cancellation safe! It's possible a partial read could occur, and then one of the other futures resolves, resulting in a loss of data.
 
 I just want a simple API that allows me to read protocol-like messages in select! loops without having to worry about cancellation safety.
+
+## Example
+
+msg-io defines an `Encoder` and `Decoder` trait. These traits are responsible for defining how a structure is encoded/decoded onto/from the wire. This can be used to fix the situation from the background:
+
+```rust
+struct Uint32FramedDecoder;
+impl decoder::Decoder for Uint16FramedDecoder {
+    type Output = Vec<u8>;
+    fn decode(&mut self, data: &[u8]) -> decoder::DecoderResult<Vec<u8>> {
+        match data.len() {
+            len if len >= 4 => {
+                let msg_len = u16::from_be_bytes([data[0], data[1], data[2], data[3]]) as usize;
+                if let Some(data) = data.get(4..4 + msg_len) {
+                    let msg = data.to_vec();
+                    return decoder::DecoderResult::Done(msg, 4 + msg_len);
+                } else {
+                    decoder::DecoderResult::Continue
+                }
+            }
+            _ => decoder::DecoderResult::Continue,
+        }
+    }
+}
+```
+
+The \[Async\]MessageIo object handles maintaining the buffer of data between read calls. When a read call returns, the Decoder is called with the current buffer. If more data is needed, the Decoder can return `Continue`, which will read more data. If there's enough data, but something unexpected occurs, i.e. some protocol error, the decoder can return an `Error`. Otherwise, the decoder should decode the object with the available data, and then return `Done` status with the amount of data used in this cycle. Since read() is cancel safe, the `read_message()` api can be used in a select loop.
+
+```rust
+let mut reader = AsyncMessageIo::new_reader(stream, Uint32FramedDecoder);
+tokio::select! {
+    _ = some_future() => {
+        // do some work
+    }
+    res = reader.read_message() => {
+        // Check error / process result
+    }
+}
+```

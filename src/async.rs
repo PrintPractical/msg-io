@@ -20,13 +20,15 @@ pub struct AsyncMessageIo<S, E, D> {
 
 impl<S, E, D> AsyncMessageIo<S, E, D> {
     /// Creates a new MessageIo instance (Read & Write) with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
-    /// * `stream`: An asynchronous stream that implements both `AsyncReadExt` and `AsyncWriteExt`.
-    /// 
+    ///
+    /// * `stream`: An asynchronous stream.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo`.
     fn new(stream: S, encoder: E, decoder: D) -> Self
     where
@@ -45,14 +47,14 @@ impl<S, E, D> AsyncMessageIo<S, E, D> {
 
 impl<S, ED> AsyncMessageIo<S, ED, ED> {
     /// Creates a new MessageIo instance for reading and writing with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `stream`: An asynchronous stream that implements both `AsyncReadExt` and `AsyncWriteExt`.
     /// * `enc_dec`: An encoder/decoder that implements both `Encoder` and `Decoder` traits. Needs to be clone as well.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo` for reading and writing.
     pub fn new_rw(stream: S, enc_dec: ED) -> Self
     where
@@ -65,13 +67,14 @@ impl<S, ED> AsyncMessageIo<S, ED, ED> {
 
 impl<S, D> AsyncMessageIo<S, (), D> {
     /// Creates a new MessageIo instance for reading with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `stream`: An asynchronous stream that implements `AsyncReadExt`.
-    /// 
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo` for reading.
     pub fn new_reader(stream: S, decoder: D) -> Self
     where
@@ -82,14 +85,13 @@ impl<S, D> AsyncMessageIo<S, (), D> {
     }
 
     /// Reads a message from the stream using the specified decoder.
-    /// 
+    ///
     /// # Type Parameters
-    /// 
-    /// * `D`: The decoder type that implements the `Decoder` trait for messages of type `M`.
+    ///
     /// * `M`: The type of the message to be decoded.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The result of the read operation, which is either:
     /// - `Ok(Some(M))`: A successfully decoded message.
     /// - `Ok(None)`: Indicates the end of the stream.
@@ -123,13 +125,14 @@ impl<S, D> AsyncMessageIo<S, (), D> {
 
 impl<S, E> AsyncMessageIo<S, E, ()> {
     /// Creates a new MessageIo instance for writing with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `stream`: An asynchronous stream that implements `AsyncWriteExt`.
-    /// 
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo` for writing.
     pub fn new_writer(stream: S, encoder: E) -> Self
     where
@@ -140,14 +143,13 @@ impl<S, E> AsyncMessageIo<S, E, ()> {
     }
 
     /// Writes a message to the stream using the specified encoder.
-    /// 
+    ///
     /// # Type Parameters
-    /// 
-    /// * `E`: The encoder type that implements the `Encoder` trait for messages of type `M`.
+    ///
     /// * `M`: The type of the message to be encoded.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The result of the write operation, which is either:
     /// - `Ok(())`: The message was successfully written.
     /// - `Err(io::Error)`: An error occurred during encoding or writing.
@@ -156,8 +158,10 @@ impl<S, E> AsyncMessageIo<S, E, ()> {
         E: Encoder<Input = M>,
         S: AsyncWriteExt + Unpin,
     {
-        let encoded =
-            self.encoder.encode(message).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        let encoded = self
+            .encoder
+            .encode(message)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
         self.stream.write_all(&encoded).await
     }
 }

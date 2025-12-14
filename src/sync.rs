@@ -21,13 +21,15 @@ pub struct MessageIo<S, E, D> {
 
 impl<S, E, D> MessageIo<S, E, D> {
     /// Creates a new MessageIo instance (Read & Write) with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
-    /// * `stream`: An asynchronous stream that implements both `Read` and `Write`.
-    /// 
+    ///
+    /// * `stream`: An synchronous stream.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo`.
     fn new(stream: S, encoder: E, decoder: D) -> Self {
         Self {
@@ -41,14 +43,14 @@ impl<S, E, D> MessageIo<S, E, D> {
 
 impl<S, ED> MessageIo<S, ED, ED> {
     /// Creates a new MessageIo instance for reading and writing with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
-    /// * `stream`: An asynchronous stream that implements both `Read` and `Write`.
+    ///
+    /// * `stream`: An synchronous stream that implements both `Read` and `Write`.
     /// * `enc_dec`: An encoder/decoder that implements both `Encoder` and `Decoder` traits. Needs to be clone as well.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo` for reading and writing.
     pub fn new_rw<T>(stream: S, enc_dec: ED) -> Self
     where
@@ -61,13 +63,14 @@ impl<S, ED> MessageIo<S, ED, ED> {
 
 impl<S, D> MessageIo<S, (), D> {
     /// Creates a new MessageIo instance for reading with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
-    /// * `stream`: An asynchronous stream that implements `Read`.
-    /// 
+    ///
+    /// * `stream`: An synchronous stream that implements `Read`.
+    /// * `decoder`: A decoder that implements the `Decoder` trait.
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo` for reading.
     pub fn new_reader(stream: S, decoder: D) -> Self
     where
@@ -83,14 +86,13 @@ impl<S, D> MessageIo<S, (), D> {
     }
 
     /// Reads a message from the stream using the specified decoder.
-    /// 
+    ///
     /// # Type Parameters
-    /// 
-    /// * `D`: The decoder type that implements the `Decoder` trait.
+    ///
     /// * `M`: The message type to be decoded.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A result containing an optional message of type `M`.
     pub fn read_message<M>(&mut self) -> io::Result<Option<M>>
     where
@@ -119,15 +121,16 @@ impl<S, D> MessageIo<S, (), D> {
     }
 }
 
-impl<S,E> MessageIo<S, E, ()> {
+impl<S, E> MessageIo<S, E, ()> {
     /// Creates a new MessageIo instance for writing with the given stream.
-    /// 
+    ///
     /// # Arguments
-    /// 
-    /// * `stream`: An asynchronous stream that implements `Write`.
-    /// 
+    ///
+    /// * `stream`: An synchronous stream that implements `Write`.
+    /// * `encoder`: An encoder that implements the `Encoder` trait.
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new instance of `MessageIo` for writing.
     pub fn new_writer(stream: S, encoder: E) -> Self
     where
@@ -143,14 +146,13 @@ impl<S,E> MessageIo<S, E, ()> {
     }
 
     /// Writes a message to the stream using the specified encoder.
-    /// 
+    ///
     /// # Type Parameters
-    /// 
-    /// * `E`: The encoder type that implements the `Encoder` trait.
+    ///
     /// * `M`: The type of the message to be encoded.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The result of the write operation, which is either:
     /// - `Ok(())`: The message was successfully written.
     /// - `Err(io::Error)`: An error occurred during encoding or writing.
