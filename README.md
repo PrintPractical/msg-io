@@ -43,7 +43,7 @@ impl decoder::Decoder<Vec<u8>> for Uint16FramedDecoder {
     fn decode(&mut self, data: &[u8]) -> decoder::DecoderResult<Vec<u8>> {
         match data.len() {
             len if len >= 4 => {
-                let msg_len = u16::from_be_bytes([data[0], data[1], data[2], data[3]]) as usize;
+                let msg_len = u32::from_be_bytes([data[0], data[1], data[2], data[3]]) as usize;
                 if let Some(data) = data.get(4..4 + msg_len) {
                     let msg = data.to_vec();
                     return decoder::DecoderResult::Done(msg, 4 + msg_len);
